@@ -1,0 +1,95 @@
+### ============================================================
+### ARCHIVO DE PRUEBAS HTTP - SPRING BOOT SECURITY, JWT & CORS
+### ============================================================
+
+@baseUrl = http://localhost:8080
+
+### 1. Intentar acceder sin token (401 Unauthorized esperado)
+GET {{baseUrl}}/api/productos
+Accept: application/json
+
+### 2. Login como ADMIN (200 OK -> Copiar token)
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin123*"
+}
+
+### Guardar token de respuesta:
+@adminToken = {{loginAdmin.response.body.token}}
+
+### 3. Login como USER (200 OK -> Copiar token)
+# @name loginUser
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "alumno",
+  "password": "Alumno123*"
+}
+
+@userToken = {{loginUser.response.body.token}}
+
+### 4. Login como SUPERVISOR (200 OK -> Reto Adicional)
+# @name loginSupervisor
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "supervisor",
+  "password": "Supervisor123*"
+}
+
+@supervisorToken = {{loginSupervisor.response.body.token}}
+
+### 5. Crear producto con ADMIN (201 Created)
+POST {{baseUrl}}/api/productos
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Monitor LG 24",
+  "categoria": "Monitores",
+  "precio": 699.90,
+  "stock": 3
+}
+
+### 6. Intentar crear producto con USER (403 Forbidden)
+POST {{baseUrl}}/api/productos
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Mouse Inalámbrico",
+  "categoria": "Periféricos",
+  "precio": 89.90,
+  "stock": 10
+}
+
+### 7. Consultar productos con USER (200 OK)
+GET {{baseUrl}}/api/productos
+Authorization: Bearer {{userToken}}
+Accept: application/json
+
+### 8. Actualizar producto con SUPERVISOR (200 OK) [Reto Adicional]
+PUT {{baseUrl}}/api/productos/1
+Authorization: Bearer {{supervisorToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Monitor LG 24 Actualizado",
+  "categoria": "Monitores",
+  "precio": 679.90,
+  "stock": 8
+}
+
+### 9. Intentar eliminar producto con SUPERVISOR (403 Forbidden) [Reto Adicional]
+DELETE {{baseUrl}}/api/productos/1
+Authorization: Bearer {{supervisorToken}}
+
+### 10. Eliminar producto con ADMIN (204 No Content)
+DELETE {{baseUrl}}/api/productos/1
+Authorization: Bearer {{adminToken}}
